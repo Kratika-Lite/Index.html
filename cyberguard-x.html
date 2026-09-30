@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CyberGuard X — PhishLayer Edition</title>
+<style>
+:root{--bg:#070b10;--panel:#0d141c;--line:#1b2a38;--tx:#cfe6ee;--dim:#6f8a97;--ac:#22d3ee;--bad:#ff4d5e;--ok:#34d399;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root[data-t=red]{--ac:#ff4d5e}:root[data-t=matrix]{--ac:#39ff14;--bg:#020602;--panel:#061006;--line:#12331a}:root[data-t=ultra]{--bg:#000;--panel:#050505;--line:#161616}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.55 "Share Tech Mono",ui-monospace,Menlo,Consolas,monospace}
+body.crt::after{content:"";position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.25) 0 1px,transparent 1px 3px)}
+header{padding:18px 16px 6px;max-width:960px;margin:auto}
+h1{margin:0;font-size:26px;letter-spacing:.14em;color:var(--ac);text-shadow:0 0 14px color-mix(in srgb,var(--ac) 50%,transparent)}
+.sub{color:var(--dim);font-size:13px}
+nav{display:flex;gap:6px;overflow-x:auto;padding:10px 16px;max-width:960px;margin:auto}
+nav button{flex:none;background:var(--panel);color:var(--dim);border:1px solid var(--line);padding:8px 12px;border-radius:4px;font:inherit;cursor:pointer}
+nav button.on{color:var(--ac);border-color:var(--ac)}
+main{max-width:960px;margin:auto;padding:8px 16px 60px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px;margin:0 0 14px}
+h2{margin:0 0 10px;font-size:18px;color:var(--ac)}h3{margin:14px 0 6px;font-size:15px}
+input,textarea{width:100%;background:#000;color:var(--tx);border:1px solid var(--line);border-radius:4px;padding:10px;font:inherit}
+input:focus,button:focus-visible,textarea:focus{outline:2px solid var(--ac);outline-offset:1px}
+.btn{background:var(--ac);color:#001318;border:0;padding:9px 14px;border-radius:4px;font:inherit;font-weight:700;cursor:pointer;margin:6px 6px 0 0}
+.btn.g{background:transparent;color:var(--ac);border:1px solid var(--ac)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.bar{height:10px;background:#000;border:1px solid var(--line);border-radius:5px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ac);transition:width .4s}
+.bad{color:var(--bad)}.ok{color:var(--ok)}.dim{color:var(--dim)}
+.tile{cursor:pointer}.tile:hover{border-color:var(--ac)}
+pre{margin:0;white-space:pre-wrap;word-break:break-all}
+.term{background:#000;border:1px solid var(--line);border-radius:6px;padding:12px;min-height:220px;max-height:340px;overflow:auto}
+.clue{display:block;width:100%;text-align:left;background:#000;border:1px solid var(--line);color:var(--tx);padding:10px;margin:6px 0;border-radius:4px;font:inherit;cursor:pointer}
+.clue.sel{border-color:var(--ac)}
+.badge{display:inline-block;border:1px solid var(--line);padding:6px 10px;border-radius:4px;margin:0 6px 6px 0}.badge.on{border-color:var(--ac);color:var(--ac)}
+label.ck{display:block;padding:6px 0}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ac);color:#001318;padding:8px 14px;border-radius:4px;display:none;font-weight:700;z-index:9}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+<header><h1>CYBERGUARD X</h1><div class="sub">PhishLayer Edition — a cybersecurity learning lab. Everything runs on your device.</div></header>
+<nav id="nav"></nav><main id="app"></main><div id="toast"></div>
+<script>
+const $=s=>document.querySelector(s);
+let S={xp:0,done:{},streak:0,last:"",theme:"cyan",crt:false,calm:false,checks:{},quiz:0,cases:0,phish:0,q:0};
+try{const r=localStorage.getItem("cgx");if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
+const save=()=>{try{localStorage.setItem("cgx",JSON.stringify(S))}catch(e){}};
+const toast=m=>{const t=$("#toast");t.textContent=m;t.style.display="block";setTimeout(()=>t.style.display="none",1800)};
+function xp(n,key){if(key){if(S.done[key])return;S.done[key]=1}S.xp+=n;toast("+"+n+" XP");save()}
+function applyTheme(){document.documentElement.dataset.t=S.theme;document.body.classList.toggle("crt",S.crt)}
+const today=new Date().toISOString().slice(0,10);
+if(S.last!==today){const y=new Date(Date.now()-864e5).toISOString().slice(0,10);S.streak=S.last===y?S.streak+1:1;S.last=today;save()}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const tabs=[["home","🏠 Command"],["phish","🎣 PhishLayer"],["pass","🔐 Passwords"],["hash","#️⃣ Hash Lab"],["detect","🕵️ Detective"],["quiz","🎯 Quiz"],["learn","🧠 Academy"],["term","🖥️ Terminal"],["priv","🔒 Privacy"],["me","🏅 Profile"]];
+let cur="home";
+function nav(){$("#nav").innerHTML=tabs.map(t=>`<button class="${t[0]===cur?"on":""}" onclick="go('${t[0]}')">${t[1]}</button>`).join("")}
+function go(t){cur=t;nav();$("#app").innerHTML="";V[t]();window.scrollTo(0,0)}
+const lvl=()=>Math.floor(S.xp/100)+1;
+const tips=["Never enter passwords through suspicious links.","Use a unique password for every account.","Turn on MFA when it is available.","Read the domain carefully, right to left before the first slash.","Don't install software from unknown sources.","Urgency is a tactic. Slow down before you click."];
+const missions=["Analyze two training URLs in PhishLayer","Score 3 or more in the Quiz","Solve one Detective case","Compare two hashes in the Hash Lab"];
+const V={};
+V.home=()=>{const d=new Date().getDate();$("#app").innerHTML=`
+<div class="card"><h2>Security status: TRAINING MODE ACTIVE</h2><div class="dim">All modules online. No data leaves this device.</div>
+<h3>Level ${lvl()} — ${S.xp%100}/100 XP</h3><div class="bar"><i style="width:${S.xp%100}%"></i></div>
+<div class="dim">🔥 Streak: ${S.streak} day${S.streak>1?"s":""}</div></div>
+<div class="grid"><div class="card"><h3>🎯 Daily mission</h3>${missions[d%missions.length]}</div>
+<div class="card"><h3>🧠 Tip of the day</h3>${tips[d%tips.length]}</div></div>
+<div class="grid">${tabs.slice(1).map(t=>`<div class="card tile" onclick="go('${t[0]}')"><b>${t[1]}</b></div>`).join("")}</div>`};
+/* PHISH */
+const WORDS=["login","verify","secure","account","update","password","bank","confirm","urgent","suspend","wallet"];
+function analyze(u){let s=u.trim();if(!s)return null;const r=[];let url;
+try{url=new URL(/^[a-z]+:\/\//i.test(s)?s:"https://"+s)}catch(e){return{err:"That does not look like a valid URL."}}
+const h=url.hostname,full=url.href;
+r.push(url.protocol==="https:"?[1,"HTTPS detected (encrypted, but not proof of trust)"]:[0,"No HTTPS: the connection is not encrypted"]);
+if(full.length>75)r.push([0,"Very long URL"]);
+if(/^\d{1,3}(\.\d{1,3}){3}$/.test(h))r.push([0,"IP address used instead of a domain name"]);
+if(s.includes("@"))r.push([0,"Contains an @ symbol, which can hide the real destination"]);
+const w=WORDS.filter(x=>full.toLowerCase().includes(x));if(w.length)r.push([0,"Suspicious security-related words: "+w.join(", ")]);
+if(h.split(".").length>4)r.push([0,"Many subdomains, so the real domain may be hidden"]);
+if((h.match(/-/g)||[]).length>2)r.push([0,"Unusual formatting: many hyphens"]);
+if(h.includes("xn--"))r.push([0,"Punycode hostname, which can imitate look-alike characters"]);
+if(!/^[a-z0-9.-]+\.[a-z0-9-]{2,}$/i.test(h)&&!/^\d/.test(h))r.push([0,"Hostname looks invalid"]);
+return{r,n:r.filter(x=>!x[0]).length}}
+const TRAIN=["https://example.test/login","http://secure-account.example.test","http://192.168.4.7/verify/account","https://login.verify.secure.bank.example.test/update?id=88231","https://example.test"];
+V.phish=()=>{$("#app").innerHTML=`<div class="card"><h2>URL Analyzer</h2><div class="dim">Teaches warning signs. It cannot prove a link is safe or malicious.</div>
+<input id="u" placeholder="https://example.test/login" aria-label="URL"><button class="btn" onclick="runU()">Analyze</button><div id="ur"></div></div>
+<div class="card"><h2>Safe URL Playground</h2><div class="dim">Fictional training links. Tap to analyze.</div>${TRAIN.map((t,i)=>`<button class="clue" onclick="$('#u').value=TRAIN[${i}];runU()">${t}</button>`).join("")}</div>
+<div class="card"><h2>Phishing Simulator (safe)</h2><div id="sim"></div></div>`;simShow()};
+function runU(){const a=analyze($("#u").value),o=$("#ur");if(!a)return;if(a.err){o.innerHTML=`<p class="bad">${a.err}</p>`;return}
+o.innerHTML=`<h3 class="${a.n?"bad":"ok"}">${a.n?"🔴 WARNING SIGNS DETECTED":"✓ ANALYSIS COMPLETE — no obvious warning signs"}</h3>${a.r.map(x=>`<div class="${x[0]?"ok":"bad"}">${x[0]?"✓":"⚠"} ${esc(x[1])}</div>`).join("")}<p>Risk indicators: <b>${a.n}</b></p>`;xp(5,"url"+esc($("#u").value).slice(0,40))}
+const SIMS=[{m:"From: support@paypa1-alerts.example.test\nSubject: URGENT!!! Account locked\n\nYour account will be closed in 10 minutes. Confirm your password here: http://paypa1-verify.example.test",t:0,e:"Fake urgency, look-alike sender (paypa1 with a number 1), a strange link, and a password request."},
+{m:"From: hr@yourcompany.example.test\nSubject: Team lunch Friday\n\nHi all, lunch is at 1pm in the cafeteria. Let me know about dietary needs by Thursday.",t:1,e:"Expected sender, no link, no attachment, no pressure, and no request for secrets."},
+{m:"From: delivery@parcel-track.example.test\nSubject: Package on hold\n\nYou did not order anything? Download the attached invoice.zip to cancel the charge.",t:0,e:"Unexpected attachment, scare tactic, and a zip file that could hide malware."}];
+function simShow(){const s=SIMS[S.q%SIMS.length];$("#sim").innerHTML=`<pre class="card" style="background:#000">${esc(s.m)}</pre><b>Would you trust this message?</b><br><button class="btn" onclick="simAns(1)">Trust it</button><button class="btn g" onclick="simAns(0)">Don't trust it</button><div id="sr"></div>`}
+function simAns(a){const s=SIMS[S.q%SIMS.length],ok=a===s.t;$("#sr").innerHTML=`<p class="${ok?"ok":"bad"}">${ok?"✓ Correct.":"✗ Not quite."} ${s.e}</p><button class="btn g" onclick="S.q++;save();simShow()">Next message</button>`;if(ok){S.phish++;xp(10)}}
+/* PASSWORD */
+function strength(p){let sc=0,n=[];if(p.length>=12)sc+=3;else if(p.length>=8)sc+=1;else n.push("Too short");if(p.length>=16)sc+=1;
+const v=[/[a-z]/,/[A-Z]/,/\d/,/[^A-Za-z0-9]/].filter(r=>r.test(p)).length;sc+=v;if(v<3)n.push("Low character variety");
+if(/(.)\1{2,}/.test(p)){sc-=2;n.push("Repeated characters")}
+if(/(0123|1234|2345|3456|abcd|bcde|qwer|asdf)/i.test(p)){sc-=2;n.push("Sequential characters")}
+if(/password|admin|welcome|letmein|iloveyou|qwerty|123456/i.test(p)){sc-=4;n.push("Common password pattern")}
+return{sc:Math.max(0,Math.min(10,sc)),n}}
+V.pass=()=>{$("#app").innerHTML=`<div class="card"><h2>Password Strength Meter</h2><div class="dim">Nothing you type is stored or sent anywhere.</div>
+<input id="pw" type="password" autocomplete="off" placeholder="Type a practice password" oninput="pwc()"><div class="bar" style="margin-top:10px"><i id="pb" style="width:0"></i></div><div id="pt"></div></div>
+<div class="card"><h2>Password Education</h2><p><b>Length wins.</b> Each extra character multiplies the guesses an attacker needs. A long phrase beats a short complex string.</p><p><b>Never reuse.</b> When one site leaks, attackers try the same password everywhere.</p><p><b>Unique passwords</b> contain the damage to one account. A password manager remembers them for you.</p><p><b>MFA/2FA</b> adds a second proof, such as a code or key, so a stolen password alone is not enough.</p></div>
+<div class="card"><h2>Practice Generator</h2><button class="btn" onclick="gen()">Generate example</button><pre id="gp" style="margin-top:10px"></pre></div>`};
+function pwc(){const p=$("#pw").value,r=strength(p),l=["VERY WEAK","VERY WEAK","WEAK","WEAK","FAIR","FAIR","GOOD","GOOD","STRONG","STRONG","EXCELLENT"][r.sc];
+$("#pb").style.width=r.sc*10+"%";$("#pb").style.background=r.sc<4?"var(--bad)":r.sc<7?"#fbbf24":"var(--ok)";
+$("#pt").innerHTML=p?`<b>${l}</b><div class="dim">${r.n.join(" · ")||"Good length and variety, no obvious patterns"}</div>`:"";if(r.sc>=8)xp(20,"pw")}
+function gen(){const c="ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*",a=new Uint32Array(16);crypto.getRandomValues(a);$("#gp").textContent=[...a].map(x=>c[x%c.length]).join("");xp(5,"gen")}
+/* HASH */
+async function sha(t){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+V.hash=()=>{$("#app").innerHTML=`<div class="card"><h2>SHA-256 Generator</h2><input id="hi" value="Hello CyberGuard" oninput="hl()"><pre id="ho" class="ok" style="margin-top:10px"></pre>
+<p class="dim">A hash is a one-way fingerprint: easy to compute, practically impossible to reverse. Systems use hashes to check file integrity and to store passwords without keeping the passwords themselves.</p></div>
+<div class="card"><h2>Hash Challenge</h2><div class="dim">Change one letter and watch every character change.</div>
+<input id="ha" value="CyberGuard" oninput="hc()" style="margin-bottom:8px"><input id="hb" value="Cyberguard" oninput="hc()"><pre id="hr" style="margin-top:10px"></pre></div>`;hl();hc()};
+async function hl(){$("#ho").textContent=await sha($("#hi").value)}
+async function hc(){const a=await sha($("#ha").value),b=await sha($("#hb").value);let d=0;
+const hb=[...b].map((c,i)=>{if(c!==a[i]){d++;return`<span class="bad">${c}</span>`}return c}).join("");
+$("#hr").innerHTML=`A: ${a}\nB: ${hb}\n\n${a===b?"Hashes are identical (same input).":`<b>${d} of 64 characters differ.</b> Tiny change, completely different hash.`}`;if(a!==b)xp(15,"hash")}
+/* DETECTIVE */
+const CASES=[{t:"The Locked Account",s:"A student gets an email saying their account will be locked in 10 minutes.",c:[["Sender: security-alert@example.test",1,"Generic alert address, not the school's known domain."],["Link: example.test/account.verify-now",1,"The link asks you to verify on a page you were pushed to."],["Message: URGENT!!! Act in 10 minutes",1,"Fake urgency is a classic pressure tactic."],["Greeting uses your real full name",0,"Not a red flag alone. Attackers can find names easily, so it proves nothing."],["Footer has an unsubscribe link",0,"Normal for many emails. Judge the rest first."]]},
+{t:"The Free Gift Card",s:"A friend's account sends you a message with a prize link.",c:[["Message: 'OMG is this you in this video??'",1,"Curiosity bait sent from a hijacked account."],["Link: http://192.168.0.9/video",1,"Raw IP address and no HTTPS."],["Sent at your usual chat time",0,"Timing alone does not tell you anything."],["Asks you to log in again to view",1,"Requests for credentials through a link are a top warning sign."]]}];
+let cs=0,pick={};
+V.detect=()=>{const c=CASES[cs];pick={};$("#app").innerHTML=`<div class="card"><h2>Case ${cs+1}: ${c.t}</h2><p>${c.s}</p><div class="dim">Tap every clue that looks suspicious, then solve.</div>
+${c.c.map((x,i)=>`<button class="clue" id="cl${i}" onclick="pick[${i}]=!pick[${i}];this.classList.toggle('sel')">${esc(x[0])}</button>`).join("")}
+<button class="btn" onclick="solve()">🧩 Solve case</button><div id="cr"></div></div>`};
+function solve(){const c=CASES[cs];let right=0,wrong=0;const out=c.c.map((x,i)=>{const p=!!pick[i],ok=p===!!x[1];ok?right++:wrong++;return`<div class="${ok?"ok":"bad"}">${ok?"✓":"✗"} ${esc(x[0])}<div class="dim">${x[2]}</div></div>`}).join("");
+const win=wrong===0;$("#cr").innerHTML=`<h3>${win?"CASE SOLVED":"Case needs another look"}</h3>${out}<button class="btn g" onclick="${win?"cs=(cs+1)%CASES.length;":""}go('detect')">${win?"Next case":"Try again"}</button>`;if(win){S.cases++;xp(25,"case"+cs)}}
+/* QUIZ */
+const Q=[["What does HTTPS help provide?",["A guarantee a site is trustworthy","Encrypted communication","Malware protection","Password recovery"],1,"HTTPS encrypts traffic in transit. Phishing sites can use it too."],
+["Which is the biggest warning sign?",["Unexpected password request","Normal greeting","Company logo","Regular email signature"],0,"Logos and signatures are easy to copy. Asking for a password is the real danger."],
+["True or false: a long unique passphrase is stronger than a short complex password.",["True","False"],0,"Length adds far more guesses than swapping letters for symbols."],
+["What does MFA add?",["A second proof of identity","A faster login","A longer password","Antivirus"],0,"A stolen password alone will not be enough."],
+["You get an unexpected .zip invoice from a stranger. Best move?",["Open it to check","Forward it to friends","Delete or report it without opening","Reply asking who they are"],2,"Unexpected attachments are a common malware route."],
+["Changing one letter of an input changes a SHA-256 hash...",["Slightly","Completely","Not at all","Only the last digits"],1,"This is the avalanche effect."],
+["Which link is the most suspicious?",["https://example.test/login","http://192.168.4.7/verify","https://example.test","https://example.test/help"],1,"IP address, no HTTPS, and a 'verify' path."],
+["What is social engineering?",["Hacking a router","Tricking people into unsafe actions","A type of firewall","Encrypting files"],1,"It targets human trust rather than software."]];
+let qi=0,qs=0;
+V.quiz=()=>{qi=0;qs=0;qShow()};
+function qShow(){if(qi>=Q.length){const ok=qs>=6;$("#app").innerHTML=`<div class="card"><h2>Quiz complete</h2><p>Score: <b>${qs} / ${Q.length}</b></p><button class="btn" onclick="go('quiz')">Retake</button></div>`;S.quiz++;xp(qs*5);return}
+const q=Q[qi];$("#app").innerHTML=`<div class="card"><div class="dim">Question ${qi+1} / ${Q.length}</div><h2>${q[0]}</h2>${q[1].map((o,i)=>`<button class="clue" onclick="qa(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join("")}<div id="qr"></div></div>`}
+function qa(i){const q=Q[qi],ok=i===q[2];if(ok)qs++;document.querySelectorAll(".clue").forEach((b,j)=>{b.disabled=true;if(j===q[2])b.style.borderColor="var(--ok)";else if(j===i)b.style.borderColor="var(--bad)"});
+$("#qr").innerHTML=`<p class="${ok?"ok":"bad"}">${ok?"✓ Correct.":"✗ Incorrect."} ${q[3]}</p><button class="btn" onclick="qi++;qShow()">Next</button>`}
+/* ACADEMY + GLOSSARY */
+const LES=[["Level 1: What is cybersecurity?","Protecting devices, accounts and data from misuse, theft and damage."],["Level 1: What is phishing?","Messages that imitate trusted senders to trick you into giving up information or clicking something unsafe."],["Level 1: What is malware?","Software built to cause harm, such as viruses, trojans and ransomware."],["Level 2: Authentication","Proving who you are with something you know, have or are. Combining them is MFA."],["Level 2: Encryption","Scrambling data so only someone with the key can read it."],["Level 2: Social engineering","Manipulating trust, fear or urgency instead of breaking technology."],["Level 3: Threat modeling","Asking what you are protecting, who might attack it, how, and what to do about it."]];
+const GL={Phishing:"Social engineering where someone tries to trick you into revealing information or taking an unsafe action.",Malware:"Software designed to damage or gain unauthorized access to systems.",Firewall:"A filter that allows or blocks network traffic by rules.",Hash:"A fixed-size one-way fingerprint of data.",Encryption:"Turning readable data into unreadable data using a key.",Authentication:"Verifying that someone is who they claim to be.",MFA:"Multi-factor authentication: two or more kinds of proof to log in.",VPN:"An encrypted tunnel between your device and another network.","Social engineering":"Manipulating people rather than machines.",Trojan:"Malware disguised as something useful.",Ransomware:"Malware that locks files and demands payment.",Botnet:"A network of infected devices controlled remotely.","Zero-day":"A flaw unknown to the vendor, with no fix available yet."};
+V.learn=()=>{$("#app").innerHTML=`<div class="card"><h2>Cyber Academy</h2>${LES.map((l,i)=>`<button class="clue" onclick="this.nextElementSibling.style.display='block';xp(5,'les${i}')">${l[0]}</button><div class="dim" style="display:none;padding:0 4px 8px">${l[1]}</div>`).join("")}</div>
+<div class="card"><h2>Glossary</h2><input id="gs" placeholder="Search: phishing" oninput="gl()"><div id="gr" style="margin-top:10px"></div></div>`;gl()};
+function gl(){const q=$("#gs").value.toLowerCase();$("#gr").innerHTML=Object.entries(GL).filter(e=>e[0].toLowerCase().includes(q)).map(e=>`<p><b>${e[0]}</b><br><span class="dim">${e[1]}</span></p>`).join("")||"<p class='dim'>No matching term.</p>"}
+/* TERMINAL */
+V.term=()=>{$("#app").innerHTML=`<div class="card"><h2>Safe Cyber Terminal</h2><div class="dim">A simulation. It cannot touch real systems.</div><div class="term" id="to">CYBERGUARD TERMINAL — type help\n</div><input id="ti" placeholder="$ help" autocomplete="off" style="margin-top:8px"></div>`;
+$("#ti").addEventListener("keydown",e=>{if(e.key!=="Enter")return;const c=e.target.value.trim().toLowerCase();e.target.value="";const o=$("#to");
+const R={help:"Commands: help clear about status modules scan-demo tips",about:"CyberGuard X — PhishLayer Edition. Built as a gift.",status:"All training modules online. Threat level: LOW (simulated).",modules:tabs.slice(1).map(t=>t[1]).join("\n"),"scan-demo":"Scanning training exercise #04...\nSuspicious pattern detected (simulated).\nANALYSIS COMPLETE — this was a demo.",tips:tips[Math.floor(Math.random()*tips.length)]};
+if(c==="clear"){o.textContent="";return}o.textContent+="$ "+c+"\n"+(R[c]||"Unknown command. Type help.")+"\n";o.scrollTop=o.scrollHeight;if(c==="scan-demo")xp(5,"scan")})};
+/* PRIVACY */
+const CK=["Review browser permissions","Enable MFA","Check account recovery options","Review app permissions","Remove unused accounts","Back up important files","Review location sharing"];
+V.priv=()=>{$("#app").innerHTML=`<div class="card"><h2>Privacy Center</h2><p><b>Cookies and tracking</b> follow your activity across sites. <b>Permissions</b> let apps use your camera, mic and location. <b>Your digital footprint</b> is everything you leave online. Share less, review often.</p></div>
+<div class="card"><h2>My Security Checklist</h2>${CK.map((c,i)=>`<label class="ck"><input type="checkbox" style="width:auto" ${S.checks[i]?"checked":""} onchange="S.checks[${i}]=this.checked;save();if(this.checked)xp(5,'ck${i}')"> ${c}</label>`).join("")}</div>`};
+/* PROFILE */
+const BD=[["🏅 First Defender",()=>S.xp>0],["🎣 Phish Hunter",()=>S.phish>=3],["🔐 Password Guardian",()=>S.done.pw],["#️⃣ Hash Apprentice",()=>S.done.hash],["🕵️ Cyber Detective",()=>S.cases>=1]];
+V.me=()=>{$("#app").innerHTML=`<div class="card"><h2>DEFENDER PROFILE</h2><pre>LEVEL ${lvl()}   XP ${S.xp}   STREAK ${S.streak}\nCASES ${S.cases}   QUIZZES ${S.quiz}   PHISH SPOTTED ${S.phish}</pre>
+<h3>Badges</h3>${BD.map(b=>`<span class="badge ${b[1]()?"on":""}">${b[0]}</span>`).join("")}</div>
+<div class="card"><h2>Settings</h2>${[["cyan","Cyan"],["red","Red alert"],["matrix","Matrix"],["ultra","Ultra-dark"]].map(t=>`<button class="btn ${S.theme===t[0]?"":"g"}" onclick="S.theme='${t[0]}';save();applyTheme();go('me')">${t[1]}</button>`).join("")}
+<label class="ck"><input type="checkbox" style="width:auto" ${S.crt?"checked":""} onchange="S.crt=this.checked;save();applyTheme()"> CRT scanlines</label>
+<button class="btn g" onclick="if(confirm('Reset all progress?')){S={xp:0,done:{},streak:1,last:today,theme:S.theme,crt:S.crt,calm:false,checks:{},quiz:0,cases:0,phish:0,q:0};save();go('me')}">Reset progress</button></div>`};
+applyTheme();go("home");
+</script></body></html>
