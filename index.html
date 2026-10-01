@@ -33,11 +33,61 @@ pre{margin:0;white-space:pre-wrap;word-break:break-all}
 label.ck{display:block;padding:6px 0}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ac);color:#001318;padding:8px 14px;border-radius:4px;display:none;font-weight:700;z-index:9}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+<style id="access-gate-style">
+#accessGate{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+.gate-box{width:min(560px,100%);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:24px;box-shadow:0 0 40px rgba(0,0,0,.45)}
+.gate-title{color:var(--ac);font-size:25px;letter-spacing:.12em;margin:0 0 8px}
+.gate-sub{color:var(--dim);margin-bottom:20px}
+.gate-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.gate-choice{background:#000;color:var(--tx);border:1px solid var(--line);padding:18px;border-radius:6px;font:inherit;cursor:pointer;text-align:left}
+.gate-choice:hover{border-color:var(--ac);color:var(--ac)}
+.gate-choice b{display:block;margin-bottom:5px}
+#ownerLogin{display:none}
+.owner-tools{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.owner-stat{font-size:24px;color:var(--ac)}
+.owner-muted{color:var(--dim);font-size:12px}
+@media(max-width:520px){.gate-actions{grid-template-columns:1fr}}
+</style>
 </style></head><body>
+<div id="accessGate">
+  <div class="gate-box">
+    <h1 class="gate-title">CYBERGUARD X</h1>
+    <div class="gate-sub">Choose how you want to enter the lab.</div>
+    <div id="gateChoice" class="gate-actions">
+      <button class="gate-choice" onclick="enterUser()">
+        <b>👤 USER</b>
+        Enter the learning lab without a login.
+      </button>
+      <button class="gate-choice" onclick="showOwnerLogin()">
+        <b>🔐 OWNER</b>
+        Private owner dashboard.
+      </button>
+    </div>
+    <div id="ownerLogin">
+      <h2>Owner access</h2>
+      <div class="dim">Enter the owner password to continue.</div>
+      <input id="ownerPassword" type="password" autocomplete="off" placeholder="Owner password" style="margin-top:10px">
+      <button class="btn" onclick="enterOwner()">Unlock owner dashboard</button>
+      <button class="btn g" onclick="backToChoices()">Back</button>
+      <p id="ownerError" class="bad"></p>
+    </div>
+  </div>
+</div>
+
 <header><h1>CYBERGUARD X</h1><div class="sub">PhishLayer Edition — a cybersecurity learning lab. Everything runs on your device.</div></header>
 <nav id="nav"></nav><main id="app"></main><div id="toast"></div>
 <script>
 const $=s=>document.querySelector(s);
+const OWNER_PASSWORD="Midnight.krats34215^&";
+function enterUser(){accessMode="user";tabs=userTabs.slice();$("#accessGate").style.display="none";nav();go("home")}
+function showOwnerLogin(){$("#gateChoice").style.display="none";$("#ownerLogin").style.display="block";$("#ownerPassword").focus()}
+function backToChoices(){$("#ownerLogin").style.display="none";$("#gateChoice").style.display="grid";$("#ownerError").textContent=""}
+function enterOwner(){
+  if($("#ownerPassword").value!==OWNER_PASSWORD){$("#ownerError").textContent="Incorrect password.";return}
+  accessMode="owner";tabs=userTabs.concat(ownerTabs);$("#accessGate").style.display="none";nav();go("owner")
+}
+
 let S={xp:0,done:{},streak:0,last:"",theme:"cyan",crt:false,calm:false,checks:{},quiz:0,cases:0,phish:0,q:0};
 try{const r=localStorage.getItem("cgx");if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
 const save=()=>{try{localStorage.setItem("cgx",JSON.stringify(S))}catch(e){}};
@@ -47,7 +97,10 @@ function applyTheme(){document.documentElement.dataset.t=S.theme;document.body.c
 const today=new Date().toISOString().slice(0,10);
 if(S.last!==today){const y=new Date(Date.now()-864e5).toISOString().slice(0,10);S.streak=S.last===y?S.streak+1:1;S.last=today;save()}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const tabs=[["home","🏠 Command"],["phish","🎣 PhishLayer"],["pass","🔐 Passwords"],["hash","#️⃣ Hash Lab"],["detect","🕵️ Detective"],["quiz","🎯 Quiz"],["learn","🧠 Academy"],["term","🖥️ Terminal"],["priv","🔒 Privacy"],["me","🏅 Profile"]];
+const userTabs=[["home","🏠 Command"],["phish","🎣 PhishLayer"],["pass","🔐 Passwords"],["hash","#️⃣ Hash Lab"],["detect","🕵️ Detective"],["quiz","🎯 Quiz"],["learn","🧠 Academy"],["term","🖥️ Terminal"],["priv","🔒 Privacy"],["me","🏅 Profile"]];
+const ownerTabs=[["owner","🛡️ Owner"],["stats","📊 Live Stats"],["ratings","⭐ Ratings"]];
+let tabs=userTabs.slice();
+let accessMode="user";
 let cur="home";
 function nav(){$("#nav").innerHTML=tabs.map(t=>`<button class="${t[0]===cur?"on":""}" onclick="go('${t[0]}')">${t[1]}</button>`).join("")}
 function go(t){cur=t;nav();$("#app").innerHTML="";V[t]();window.scrollTo(0,0)}
@@ -160,5 +213,95 @@ V.me=()=>{$("#app").innerHTML=`<div class="card"><h2>DEFENDER PROFILE</h2><pre>L
 <div class="card"><h2>Settings</h2>${[["cyan","Cyan"],["red","Red alert"],["matrix","Matrix"],["ultra","Ultra-dark"]].map(t=>`<button class="btn ${S.theme===t[0]?"":"g"}" onclick="S.theme='${t[0]}';save();applyTheme();go('me')">${t[1]}</button>`).join("")}
 <label class="ck"><input type="checkbox" style="width:auto" ${S.crt?"checked":""} onchange="S.crt=this.checked;save();applyTheme()"> CRT scanlines</label>
 <button class="btn g" onclick="if(confirm('Reset all progress?')){S={xp:0,done:{},streak:1,last:today,theme:S.theme,crt:S.crt,calm:false,checks:{},quiz:0,cases:0,phish:0,q:0};save();go('me')}">Reset progress</button></div>`};
-applyTheme();go("home");
+
+/* OWNER-ONLY DASHBOARD */
+V.owner=()=>{
+  if(accessMode!=="owner")return go("home");
+  $("#app").innerHTML=`<div class="card"><h2>OWNER CONTROL CENTER</h2>
+  <p class="dim">Private dashboard. These tabs appear only after owner authentication.</p>
+  <div class="owner-tools">
+    <button class="btn" onclick="go('stats')">📊 Live Stats</button>
+    <button class="btn" onclick="go('ratings')">⭐ Ratings</button>
+    <button class="btn g" onclick="exitOwner()">Exit owner mode</button>
+  </div></div>`;
+};
+function ownerStats(){
+  const total=Number(localStorage.getItem("cgx_total_visits")||0);
+  const live=Number(localStorage.getItem("cgx_live_users")||0);
+  const count=Number(localStorage.getItem("cgx_rating_count")||0);
+  const sum=Number(localStorage.getItem("cgx_rating_sum")||0);
+  const avg=count?(sum/count).toFixed(2):"—";
+  return {total,live,count,sum,avg};
+}
+V.stats=()=>{
+  if(accessMode!=="owner")return go("home");
+  const s=ownerStats();
+  $("#app").innerHTML=`<div class="card"><h2>LIVE USAGE</h2>
+  <div class="grid">
+    <div class="card"><div class="dim">Currently live</div><div class="owner-stat">${s.live}</div></div>
+    <div class="card"><div class="dim">Total sessions</div><div class="owner-stat">${s.total}</div></div>
+    <div class="card"><div class="dim">Ratings</div><div class="owner-stat">${s.count}</div></div>
+    <div class="card"><div class="dim">Average rating</div><div class="owner-stat">${s.avg} / 5</div></div>
+  </div>
+  <p class="owner-muted">This HTML version stores stats locally in the browser. A backend/database is required for shared cross-device live users and ratings.</p>
+  </div>`;
+};
+V.ratings=()=>{
+  if(accessMode!=="owner")return go("home");
+  const s=ownerStats();
+  $("#app").innerHTML=`<div class="card"><h2>RATING OVERVIEW</h2>
+  <p><span class="owner-stat">${s.avg}</span> / 5</p>
+  <p class="dim">Total submitted ratings: ${s.count}</p>
+  <p class="dim">Total star points: ${s.sum}</p>
+  <button class="btn g" onclick="go('owner')">Back to owner center</button></div>`;
+};
+function exitOwner(){accessMode="user";tabs=userTabs.slice();go("home")}
+
+applyTheme();
+$("#accessGate").style.display="flex";
+
+/* Prototype local usage tracking */
+(function(){
+  const k="cgx_total_visits", l="cgx_live_users", r="cgx_rating_done";
+  localStorage.setItem(k,String(Number(localStorage.getItem(k)||0)+1));
+  localStorage.setItem(l,String(Number(localStorage.getItem(l)||0)+1));
+  let left=false;
+  function markLeft(){
+    if(left)return;
+    left=true;
+    localStorage.setItem(l,String(Math.max(0,Number(localStorage.getItem(l)||1)-1)));
+  }
+  window.addEventListener("beforeunload",markLeft);
+  window.addEventListener("pagehide",markLeft);
+
+  let shown=false;
+  function showRating(){
+    if(shown||localStorage.getItem(r))return;
+    shown=true;
+    const box=document.createElement("div");
+    box.id="ratingPopup";
+    box.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px";
+    box.innerHTML=`<div class="gate-box" style="max-width:460px;text-align:center">
+      <h2>⭐ Rate CyberGuard X</h2>
+      <p class="dim">Before you leave, how would you rate your experience?</p>
+      <div id="stars" style="font-size:38px;letter-spacing:6px;margin:16px 0">
+        ${[1,2,3,4,5].map(n=>`<button aria-label="${n} stars" data-star="${n}" style="background:none;border:0;color:var(--dim);font-size:38px;cursor:pointer">★</button>`).join("")}
+      </div>
+      <button id="skipRating" class="btn g">Not now</button>
+    </div>`;
+    document.body.appendChild(box);
+    box.querySelectorAll("[data-star]").forEach(b=>b.onclick=()=>{
+      const n=Number(b.dataset.star);
+      localStorage.setItem("cgx_rating_sum",String(Number(localStorage.getItem("cgx_rating_sum")||0)+n));
+      localStorage.setItem("cgx_rating_count",String(Number(localStorage.getItem("cgx_rating_count")||0)+1));
+      localStorage.setItem(r,"1");
+      box.remove();
+    });
+    box.querySelector("#skipRating").onclick=()=>box.remove();
+  }
+  document.addEventListener("visibilitychange",()=>{
+    if(document.visibilityState==="hidden")showRating();
+  });
+})();
+
 </script></body></html>
