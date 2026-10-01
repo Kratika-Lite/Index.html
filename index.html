@@ -32,15 +32,10 @@ pre{margin:0;white-space:pre-wrap;word-break:break-all}
 .badge{display:inline-block;border:1px solid var(--line);padding:6px 10px;border-radius:4px;margin:0 6px 6px 0}.badge.on{border-color:var(--ac);color:var(--ac)}
 label.ck{display:block;padding:6px 0}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ac);color:#001318;padding:8px 14px;border-radius:4px;display:none;font-weight:700;z-index:9}
-#intro{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;transition:opacity .7s}
-#intro.out{opacity:0;pointer-events:none}#intro h1{font-size:clamp(34px,10vw,68px);margin:8px 0}#intro p{max-width:460px}
-.rev{opacity:0;transform:translateY(24px);transition:opacity .6s,transform .6s}.rev.in{opacity:1;transform:none}
-.cred a{color:var(--ac)}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}.rev{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style></head><body>
 <header><h1>CYBERGUARD X</h1><div class="sub">PhishLayer Edition — a cybersecurity learning lab. Everything runs on your device.</div></header>
 <nav id="nav"></nav><main id="app"></main><div id="toast"></div>
-<div id="intro"><div class="sub">PHISHLAYER EDITION</div><h1>CYBERGUARD X</h1><p>Spot phishing, protect your passwords and think like a defender.</p><p class="dim">Built for every learner online, made by Kratika Kushwaha</p><button class="btn" onclick="enter()">Enter the lab</button></div>
 <script>
 const $=s=>document.querySelector(s);
 let S={xp:0,done:{},streak:0,last:"",theme:"cyan",crt:false,calm:false,checks:{},quiz:0,cases:0,phish:0,q:0};
@@ -55,7 +50,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 const tabs=[["home","🏠 Command"],["phish","🎣 PhishLayer"],["pass","🔐 Passwords"],["hash","#️⃣ Hash Lab"],["detect","🕵️ Detective"],["quiz","🎯 Quiz"],["learn","🧠 Academy"],["term","🖥️ Terminal"],["priv","🔒 Privacy"],["me","🏅 Profile"]];
 let cur="home";
 function nav(){$("#nav").innerHTML=tabs.map(t=>`<button class="${t[0]===cur?"on":""}" onclick="go('${t[0]}')">${t[1]}</button>`).join("")}
-function go(t){cur=t;nav();$("#app").innerHTML="";V[t]();credits();reveal();window.scrollTo(0,0)}
+function go(t){cur=t;nav();$("#app").innerHTML="";V[t]();window.scrollTo(0,0)}
 const lvl=()=>Math.floor(S.xp/100)+1;
 const tips=["Never enter passwords through suspicious links.","Use a unique password for every account.","Turn on MFA when it is available.","Read the domain carefully, right to left before the first slash.","Don't install software from unknown sources.","Urgency is a tactic. Slow down before you click."];
 const missions=["Analyze two training URLs in PhishLayer","Score 3 or more in the Quiz","Solve one Detective case","Compare two hashes in the Hash Lab"];
@@ -66,7 +61,7 @@ V.home=()=>{const d=new Date().getDate();$("#app").innerHTML=`
 <div class="dim">🔥 Streak: ${S.streak} day${S.streak>1?"s":""}</div></div>
 <div class="grid"><div class="card"><h3>🎯 Daily mission</h3>${missions[d%missions.length]}</div>
 <div class="card"><h3>🧠 Tip of the day</h3>${tips[d%tips.length]}</div></div>
-<div class="grid">${tabs.slice(1).map(t=>`<div class="card tile" onclick="go('${t[0]}')"><b>${t[1]}</b></div>`).join("")}</div>`+tour()};
+<div class="grid">${tabs.slice(1).map(t=>`<div class="card tile" onclick="go('${t[0]}')"><b>${t[1]}</b></div>`).join("")}</div>`};
 /* PHISH */
 const WORDS=["login","verify","secure","account","update","password","bank","confirm","urgent","suspend","wallet"];
 function analyze(u){let s=u.trim();if(!s)return null;const r=[];let url;
@@ -165,10 +160,5 @@ V.me=()=>{$("#app").innerHTML=`<div class="card"><h2>DEFENDER PROFILE</h2><pre>L
 <div class="card"><h2>Settings</h2>${[["cyan","Cyan"],["red","Red alert"],["matrix","Matrix"],["ultra","Ultra-dark"]].map(t=>`<button class="btn ${S.theme===t[0]?"":"g"}" onclick="S.theme='${t[0]}';save();applyTheme();go('me')">${t[1]}</button>`).join("")}
 <label class="ck"><input type="checkbox" style="width:auto" ${S.crt?"checked":""} onchange="S.crt=this.checked;save();applyTheme()"> CRT scanlines</label>
 <button class="btn g" onclick="if(confirm('Reset all progress?')){S={xp:0,done:{},streak:1,last:today,theme:S.theme,crt:S.crt,calm:false,checks:{},quiz:0,cases:0,phish:0,q:0};save();go('me')}">Reset progress</button></div>`};
-const C={name:"Kratika Kushwaha"};
-function credits(){const d=document.createElement("div");d.className="card cred rev";d.innerHTML=`<h2>About the creator</h2><p><b>${esc(C.name)}</b><br>Built CyberGuard X for every learner who wants to stay safe online.</p><p class="dim">Stay curious. Stay safe online.</p>`;$("#app").appendChild(d)}
-function tour(){return [["🎣 Spot the phish","Paste a link and see the warning signs a scammer hopes you miss.","phish"],["🔐 Guard your passwords","Watch a strength meter react and learn why length wins.","pass"],["🕵️ Solve a case","Investigate a fake alert and hunt for the red flags.","detect"]].map(x=>`<div class="card rev" style="min-height:38vh;display:flex;flex-direction:column;justify-content:center"><h2 style="font-size:24px">${x[0]}</h2><p>${x[1]}</p><div><button class="btn" onclick="go('${x[2]}')">Open</button></div></div>`).join("")}
-function reveal(){const els=document.querySelectorAll(".rev");if(S.calm||matchMedia("(prefers-reduced-motion:reduce)").matches||!("IntersectionObserver" in window)){els.forEach(e=>e.classList.add("in"));return}const o=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");o.unobserve(e.target)}}),{threshold:.15});els.forEach(e=>o.observe(e))}
-function enter(){const i=$("#intro");i.classList.add("out");setTimeout(()=>i.remove(),800)}
 applyTheme();go("home");
 </script></body></html>
