@@ -32,62 +32,17 @@ pre{margin:0;white-space:pre-wrap;word-break:break-all}
 .badge{display:inline-block;border:1px solid var(--line);padding:6px 10px;border-radius:4px;margin:0 6px 6px 0}.badge.on{border-color:var(--ac);color:var(--ac)}
 label.ck{display:block;padding:6px 0}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ac);color:#001318;padding:8px 14px;border-radius:4px;display:none;font-weight:700;z-index:9}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
-
-<style id="access-gate-style">
-#accessGate{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
-.gate-box{width:min(560px,100%);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:24px;box-shadow:0 0 40px rgba(0,0,0,.45)}
-.gate-title{color:var(--ac);font-size:25px;letter-spacing:.12em;margin:0 0 8px}
-.gate-sub{color:var(--dim);margin-bottom:20px}
-.gate-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.gate-choice{background:#000;color:var(--tx);border:1px solid var(--line);padding:18px;border-radius:6px;font:inherit;cursor:pointer;text-align:left}
-.gate-choice:hover{border-color:var(--ac);color:var(--ac)}
-.gate-choice b{display:block;margin-bottom:5px}
-#ownerLogin{display:none}
-.owner-tools{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
-.owner-stat{font-size:24px;color:var(--ac)}
-.owner-muted{color:var(--dim);font-size:12px}
-@media(max-width:520px){.gate-actions{grid-template-columns:1fr}}
-</style>
-</style></head><body>
-<div id="accessGate">
-  <div class="gate-box">
-    <h1 class="gate-title">CYBERGUARD X</h1>
-    <div class="gate-sub">Choose how you want to enter the lab.</div>
-    <div id="gateChoice" class="gate-actions">
-      <button class="gate-choice" onclick="enterUser()">
-        <b>👤 USER</b>
-        Enter the learning lab without a login.
-      </button>
-      <button class="gate-choice" onclick="showOwnerLogin()">
-        <b>🔐 OWNER</b>
-        Private owner dashboard.
-      </button>
-    </div>
-    <div id="ownerLogin">
-      <h2>Owner access</h2>
-      <div class="dim">Enter the owner password to continue.</div>
-      <input id="ownerPassword" type="password" autocomplete="off" placeholder="Owner password" style="margin-top:10px">
-      <button class="btn" onclick="enterOwner()">Unlock owner dashboard</button>
-      <button class="btn g" onclick="backToChoices()">Back</button>
-      <p id="ownerError" class="bad"></p>
-    </div>
-  </div>
-</div>
-
+#intro{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;transition:opacity .7s}
+#intro.out{opacity:0;pointer-events:none}#intro h1{font-size:clamp(34px,10vw,68px);margin:8px 0}#intro p{max-width:460px}
+.rev{opacity:0;transform:translateY(24px);transition:opacity .6s,transform .6s}.rev.in{opacity:1;transform:none}
+.cred a{color:var(--ac)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}.rev{opacity:1;transform:none}}
+.cv{width:100%;height:230px;display:block;touch-action:pan-y}.tile{transition:transform .15s}body.focus nav{display:none}</style><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script></head><body>
 <header><h1>CYBERGUARD X</h1><div class="sub">PhishLayer Edition — a cybersecurity learning lab. Everything runs on your device.</div></header>
 <nav id="nav"></nav><main id="app"></main><div id="toast"></div>
+<div id="intro"><div id="ci" class="cv" style="width:min(320px,80vw);height:230px"></div><div class="sub">PHISHLAYER EDITION</div><h1>CYBERGUARD X</h1><p>Spot phishing, protect your passwords and think like a defender.</p><p class="dim">Built for every learner online, made by Kratika Kushwaha</p><button class="btn" onclick="enter()">Enter the lab</button></div>
 <script>
 const $=s=>document.querySelector(s);
-const OWNER_PASSWORD="Midnight.krats34215^&";
-function enterUser(){accessMode="user";tabs=userTabs.slice();$("#accessGate").style.display="none";nav();go("home")}
-function showOwnerLogin(){$("#gateChoice").style.display="none";$("#ownerLogin").style.display="block";$("#ownerPassword").focus()}
-function backToChoices(){$("#ownerLogin").style.display="none";$("#gateChoice").style.display="grid";$("#ownerError").textContent=""}
-function enterOwner(){
-  if($("#ownerPassword").value!==OWNER_PASSWORD){$("#ownerError").textContent="Incorrect password.";return}
-  accessMode="owner";tabs=userTabs.concat(ownerTabs);$("#accessGate").style.display="none";nav();go("owner")
-}
-
 let S={xp:0,done:{},streak:0,last:"",theme:"cyan",crt:false,calm:false,checks:{},quiz:0,cases:0,phish:0,q:0};
 try{const r=localStorage.getItem("cgx");if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
 const save=()=>{try{localStorage.setItem("cgx",JSON.stringify(S))}catch(e){}};
@@ -97,24 +52,21 @@ function applyTheme(){document.documentElement.dataset.t=S.theme;document.body.c
 const today=new Date().toISOString().slice(0,10);
 if(S.last!==today){const y=new Date(Date.now()-864e5).toISOString().slice(0,10);S.streak=S.last===y?S.streak+1:1;S.last=today;save()}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const userTabs=[["home","🏠 Command"],["phish","🎣 PhishLayer"],["pass","🔐 Passwords"],["hash","#️⃣ Hash Lab"],["detect","🕵️ Detective"],["quiz","🎯 Quiz"],["learn","🧠 Academy"],["term","🖥️ Terminal"],["priv","🔒 Privacy"],["me","🏅 Profile"]];
-const ownerTabs=[["owner","🛡️ Owner"],["stats","📊 Live Stats"],["ratings","⭐ Ratings"]];
-let tabs=userTabs.slice();
-let accessMode="user";
+const tabs=[["home","🏠 Command"],["phish","🎣 PhishLayer"],["pass","🔐 Passwords"],["hash","#️⃣ Hash Lab"],["detect","🕵️ Detective"],["quiz","🎯 Quiz"],["net","🌐 Network"],["ciph","🔑 Ciphers"],["learn","🧠 Academy"],["term","🖥️ Terminal"],["priv","🔒 Privacy"],["me","🏅 Profile"]];
 let cur="home";
 function nav(){$("#nav").innerHTML=tabs.map(t=>`<button class="${t[0]===cur?"on":""}" onclick="go('${t[0]}')">${t[1]}</button>`).join("")}
-function go(t){cur=t;nav();$("#app").innerHTML="";V[t]();window.scrollTo(0,0)}
+function go(t){cur=t;nav();$("#app").innerHTML="";V[t]();credits();reveal();tilt();{const h=$("#c3");if(h)scene(h,"net")}window.scrollTo(0,0)}
 const lvl=()=>Math.floor(S.xp/100)+1;
 const tips=["Never enter passwords through suspicious links.","Use a unique password for every account.","Turn on MFA when it is available.","Read the domain carefully, right to left before the first slash.","Don't install software from unknown sources.","Urgency is a tactic. Slow down before you click."];
 const missions=["Analyze two training URLs in PhishLayer","Score 3 or more in the Quiz","Solve one Detective case","Compare two hashes in the Hash Lab"];
 const V={};
 V.home=()=>{const d=new Date().getDate();$("#app").innerHTML=`
-<div class="card"><h2>Security status: TRAINING MODE ACTIVE</h2><div class="dim">All modules online. No data leaves this device.</div>
+<div class="card" style="padding:0;overflow:hidden"><div id="c3" class="cv"></div></div><div class="card"><h2>Security status: TRAINING MODE ACTIVE</h2><div class="dim">All modules online. No data leaves this device.</div>
 <h3>Level ${lvl()} — ${S.xp%100}/100 XP</h3><div class="bar"><i style="width:${S.xp%100}%"></i></div>
 <div class="dim">🔥 Streak: ${S.streak} day${S.streak>1?"s":""}</div></div>
 <div class="grid"><div class="card"><h3>🎯 Daily mission</h3>${missions[d%missions.length]}</div>
 <div class="card"><h3>🧠 Tip of the day</h3>${tips[d%tips.length]}</div></div>
-<div class="grid">${tabs.slice(1).map(t=>`<div class="card tile" onclick="go('${t[0]}')"><b>${t[1]}</b></div>`).join("")}</div>`};
+<div class="grid">${tabs.slice(1).map(t=>`<div class="card tile" onclick="go('${t[0]}')"><b>${t[1]}</b></div>`).join("")}</div>`+tour()};
 /* PHISH */
 const WORDS=["login","verify","secure","account","update","password","bank","confirm","urgent","suspend","wallet"];
 function analyze(u){let s=u.trim();if(!s)return null;const r=[];let url;
@@ -185,12 +137,37 @@ const Q=[["What does HTTPS help provide?",["A guarantee a site is trustworthy","
 ["Changing one letter of an input changes a SHA-256 hash...",["Slightly","Completely","Not at all","Only the last digits"],1,"This is the avalanche effect."],
 ["Which link is the most suspicious?",["https://example.test/login","http://192.168.4.7/verify","https://example.test","https://example.test/help"],1,"IP address, no HTTPS, and a 'verify' path."],
 ["What is social engineering?",["Hacking a router","Tricking people into unsafe actions","A type of firewall","Encrypting files"],1,"It targets human trust rather than software."]];
-let qi=0,qs=0;
-V.quiz=()=>{qi=0;qs=0;qShow()};
-function qShow(){if(qi>=Q.length){const ok=qs>=6;$("#app").innerHTML=`<div class="card"><h2>Quiz complete</h2><p>Score: <b>${qs} / ${Q.length}</b></p><button class="btn" onclick="go('quiz')">Retake</button></div>`;S.quiz++;xp(qs*5);return}
-const q=Q[qi];$("#app").innerHTML=`<div class="card"><div class="dim">Question ${qi+1} / ${Q.length}</div><h2>${q[0]}</h2>${q[1].map((o,i)=>`<button class="clue" onclick="qa(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join("")}<div id="qr"></div></div>`}
-function qa(i){const q=Q[qi],ok=i===q[2];if(ok)qs++;document.querySelectorAll(".clue").forEach((b,j)=>{b.disabled=true;if(j===q[2])b.style.borderColor="var(--ok)";else if(j===i)b.style.borderColor="var(--bad)"});
-$("#qr").innerHTML=`<p class="${ok?"ok":"bad"}">${ok?"✓ Correct.":"✗ Incorrect."} ${q[3]}</p><button class="btn" onclick="qi++;qShow()">Next</button>`}
+let qi=0,qk=0,qp=[],GOAL=5;
+function qEnd(){document.body.classList.remove("focus");onbeforeunload=null}
+V.quiz=()=>{$("#app").innerHTML=`<div class="card"><h2>Streak Mission</h2><p>Answer <b>${GOAL} questions in a row</b> correctly. One wrong answer resets your streak. The mission stays open, and the browser warns you before closing the tab, until you finish and press Exit.</p><button class="btn" onclick="qStart()">Start mission</button></div>`};
+function qStart(){qp=Q.map((_,i)=>i).sort(()=>Math.random()-.5);qi=0;qk=0;document.body.classList.add("focus");onbeforeunload=e=>{e.preventDefault();return""};qShow()}
+function qLeave(){if(confirm("Leave the mission? Your streak will be lost.")){qEnd();go("quiz")}}
+function qShow(){const q=Q[qp[qi%qp.length]];$("#app").innerHTML=`<div class="card"><div class="dim">STREAK ${qk} / ${GOAL}</div><div class="bar"><i style="width:${qk/GOAL*100}%"></i></div><h2 style="margin-top:12px">${q[0]}</h2>${q[1].map((o,i)=>`<button class="clue" onclick="qa(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join("")}<div id="qr"></div><button class="btn g" onclick="qLeave()">Leave mission</button></div>`}
+function qa(i){const q=Q[qp[qi%qp.length]],ok=i===q[2];if(ok)qk++;else qk=0;document.querySelectorAll(".clue").forEach((b,j)=>{b.disabled=true;if(j===q[2])b.style.borderColor="var(--ok)";else if(j===i)b.style.borderColor="var(--bad)"});
+const w=qk>=GOAL;if(w){S.quiz++;xp(50)}
+$("#qr").innerHTML=`<p class="${ok?"ok":"bad"}">${ok?"✓ Correct.":"✗ Incorrect. Streak reset."} ${q[3]}</p>`+(w?`<h3 class="ok">MISSION COMPLETE</h3><button class="btn" onclick="qEnd();go('home')">Exit to Command Center</button>`:`<button class="btn" onclick="qi++;qShow()">Next</button>`)}
+const PORTS=[[22,"SSH","secure remote login"],[53,"DNS","turns names into IPs"],[80,"HTTP","web, not encrypted"],[443,"HTTPS","web, encrypted"],[25,"SMTP","sending email"],[3389,"RDP","remote desktop, often attacked"]];
+V.net=()=>{$("#app").innerHTML=`<div class="card"><h2>Subnet Calculator</h2><div class="dim">Enter an IPv4 address and a CIDR prefix.</div><input id="ip" value="192.168.1.77" oninput="sn(1)" style="margin-bottom:8px"><input id="cd" type="number" min="1" max="30" value="24" oninput="sn(1)"><pre id="so" style="margin-top:10px"></pre></div><div class="card"><h2>Common Ports</h2>${PORTS.map(p=>`<div><b class="ok">${p[0]}</b> ${p[1]}<span class="dim"> — ${p[2]}</span></div>`).join("")}</div>`;sn()};
+function sn(q){const ip=$("#ip").value.trim().split("."),c=+$("#cd").value,o=$("#so");if(ip.length!==4||ip.some(x=>x===""||isNaN(x)||x<0||x>255)||!(c>=1&&c<=30)){o.innerHTML='<span class="bad">Enter a valid IPv4 address and a prefix from 1 to 30.</span>';return}
+const n=((ip[0]<<24)|(ip[1]<<16)|(ip[2]<<8)|+ip[3])>>>0,m=(0xFFFFFFFF<<(32-c))>>>0,net=(n&m)>>>0,bc=(net|~m)>>>0,f=x=>[x>>>24,(x>>16)&255,(x>>8)&255,x&255].join(".");
+o.textContent=`Network:      ${f(net)}\nMask:         ${f(m)}\nBroadcast:    ${f(bc)}\nFirst host:   ${f(net+1)}\nLast host:    ${f(bc-1)}\nUsable hosts: ${Math.pow(2,32-c)-2}`;if(q)xp(10,"sn")}
+V.ciph=()=>{$("#app").innerHTML=`<div class="card"><h2>Caesar Cipher</h2><input id="ct" value="Hello CyberGuard" oninput="cz(1)"><label class="ck">Shift: <b id="sv">3</b><input id="cs" type="range" min="1" max="25" value="3" oninput="cz(1)"></label><pre id="co" class="ok"></pre><div class="dim">Each letter moves along the alphabet. Only 25 shifts exist, so it is easy to crack. Challenge: find the shift that turns "Khoor" into a real word.</div></div><div class="card"><h2>Base64</h2><div class="dim">Encoding is not encryption. Anyone can reverse it.</div><input id="bt" value="CyberGuard" oninput="bz(1)"><pre id="bo" style="margin-top:8px"></pre></div>`;cz();bz()};
+function cz(q){const k=+$("#cs").value;$("#sv").textContent=k;$("#co").textContent=$("#ct").value.replace(/[a-z]/gi,c=>{const b=c<"a"?65:97;return String.fromCharCode((c.charCodeAt(0)-b+k)%26+b)});if(q)xp(10,"cz")}
+function bz(q){const v=$("#bt").value;let e="";try{e=btoa(unescape(encodeURIComponent(v)))}catch(x){}$("#bo").textContent="Encoded: "+e+"\nDecoded back: "+v;if(q)xp(10,"bz")}
+function tilt(){document.querySelectorAll(".tile").forEach(t=>{t.onpointermove=e=>{const r=t.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;t.style.transform=`perspective(600px) rotateY(${x*14}deg) rotateX(${-y*14}deg) scale(1.03)`};t.onpointerleave=()=>{t.style.transform=""}})}
+function scene(el,kind){if(!window.THREE||!el)return;const T=THREE,W=el.clientWidth||320,H=el.clientHeight||230,col=new T.Color(getComputedStyle(document.documentElement).getPropertyValue("--ac").trim()||"#22d3ee");
+const r=new T.WebGLRenderer({antialias:true,alpha:true});r.setSize(W,H);r.setPixelRatio(Math.min(devicePixelRatio,2));el.innerHTML="";el.appendChild(r.domElement);
+const sc=new T.Scene(),cam=new T.PerspectiveCamera(50,W/H,.1,50),g=new T.Group(),P=[];cam.position.z=kind==="net"?7:4.2;sc.add(g);let pulse=null;
+if(kind==="shield"){g.add(new T.LineSegments(new T.WireframeGeometry(new T.IcosahedronGeometry(1.5,1)),new T.LineBasicMaterial({color:col})));g.add(new T.Mesh(new T.OctahedronGeometry(.7),new T.MeshBasicMaterial({color:col,wireframe:true})))}
+else{for(let i=0;i<26;i++)P.push(new T.Vector3((Math.random()-.5)*7,(Math.random()-.5)*3.6,(Math.random()-.5)*4));
+P.forEach(p=>{const m=new T.Mesh(new T.SphereGeometry(.07,8,8),new T.MeshBasicMaterial({color:col}));m.position.copy(p);g.add(m)});
+const L=[];P.forEach((a,i)=>P.forEach((b,j)=>{if(j>i&&a.distanceTo(b)<2.4)L.push(a,b)}));g.add(new T.LineSegments(new T.BufferGeometry().setFromPoints(L),new T.LineBasicMaterial({color:col,transparent:true,opacity:.35})));
+pulse=new T.Mesh(new T.SphereGeometry(.14,10,10),new T.MeshBasicMaterial({color:0xff4d5e}));g.add(pulse)}
+let mx=0,my=0,t=0;el.onpointermove=e=>{const b=el.getBoundingClientRect();mx=(e.clientX-b.left)/b.width-.5;my=(e.clientY-b.top)/b.height-.5};
+const calm=S.calm||matchMedia("(prefers-reduced-motion:reduce)").matches;
+function f(){if(!el.isConnected){r.dispose();return}t+=.01;g.rotation.y=t*.6+mx;g.rotation.x=my*.8+(kind==="shield"?t*.3:0);
+if(pulse){const k=t*1.5,a=P[Math.floor(k)%P.length],b=P[(Math.floor(k)+1)%P.length];pulse.position.lerpVectors(a,b,k%1)}
+r.render(sc,cam);if(!calm)requestAnimationFrame(f)}f()}
 /* ACADEMY + GLOSSARY */
 const LES=[["Level 1: What is cybersecurity?","Protecting devices, accounts and data from misuse, theft and damage."],["Level 1: What is phishing?","Messages that imitate trusted senders to trick you into giving up information or clicking something unsafe."],["Level 1: What is malware?","Software built to cause harm, such as viruses, trojans and ransomware."],["Level 2: Authentication","Proving who you are with something you know, have or are. Combining them is MFA."],["Level 2: Encryption","Scrambling data so only someone with the key can read it."],["Level 2: Social engineering","Manipulating trust, fear or urgency instead of breaking technology."],["Level 3: Threat modeling","Asking what you are protecting, who might attack it, how, and what to do about it."]];
 const GL={Phishing:"Social engineering where someone tries to trick you into revealing information or taking an unsafe action.",Malware:"Software designed to damage or gain unauthorized access to systems.",Firewall:"A filter that allows or blocks network traffic by rules.",Hash:"A fixed-size one-way fingerprint of data.",Encryption:"Turning readable data into unreadable data using a key.",Authentication:"Verifying that someone is who they claim to be.",MFA:"Multi-factor authentication: two or more kinds of proof to log in.",VPN:"An encrypted tunnel between your device and another network.","Social engineering":"Manipulating people rather than machines.",Trojan:"Malware disguised as something useful.",Ransomware:"Malware that locks files and demands payment.",Botnet:"A network of infected devices controlled remotely.","Zero-day":"A flaw unknown to the vendor, with no fix available yet."};
@@ -213,95 +190,10 @@ V.me=()=>{$("#app").innerHTML=`<div class="card"><h2>DEFENDER PROFILE</h2><pre>L
 <div class="card"><h2>Settings</h2>${[["cyan","Cyan"],["red","Red alert"],["matrix","Matrix"],["ultra","Ultra-dark"]].map(t=>`<button class="btn ${S.theme===t[0]?"":"g"}" onclick="S.theme='${t[0]}';save();applyTheme();go('me')">${t[1]}</button>`).join("")}
 <label class="ck"><input type="checkbox" style="width:auto" ${S.crt?"checked":""} onchange="S.crt=this.checked;save();applyTheme()"> CRT scanlines</label>
 <button class="btn g" onclick="if(confirm('Reset all progress?')){S={xp:0,done:{},streak:1,last:today,theme:S.theme,crt:S.crt,calm:false,checks:{},quiz:0,cases:0,phish:0,q:0};save();go('me')}">Reset progress</button></div>`};
-
-/* OWNER-ONLY DASHBOARD */
-V.owner=()=>{
-  if(accessMode!=="owner")return go("home");
-  $("#app").innerHTML=`<div class="card"><h2>OWNER CONTROL CENTER</h2>
-  <p class="dim">Private dashboard. These tabs appear only after owner authentication.</p>
-  <div class="owner-tools">
-    <button class="btn" onclick="go('stats')">📊 Live Stats</button>
-    <button class="btn" onclick="go('ratings')">⭐ Ratings</button>
-    <button class="btn g" onclick="exitOwner()">Exit owner mode</button>
-  </div></div>`;
-};
-function ownerStats(){
-  const total=Number(localStorage.getItem("cgx_total_visits")||0);
-  const live=Number(localStorage.getItem("cgx_live_users")||0);
-  const count=Number(localStorage.getItem("cgx_rating_count")||0);
-  const sum=Number(localStorage.getItem("cgx_rating_sum")||0);
-  const avg=count?(sum/count).toFixed(2):"—";
-  return {total,live,count,sum,avg};
-}
-V.stats=()=>{
-  if(accessMode!=="owner")return go("home");
-  const s=ownerStats();
-  $("#app").innerHTML=`<div class="card"><h2>LIVE USAGE</h2>
-  <div class="grid">
-    <div class="card"><div class="dim">Currently live</div><div class="owner-stat">${s.live}</div></div>
-    <div class="card"><div class="dim">Total sessions</div><div class="owner-stat">${s.total}</div></div>
-    <div class="card"><div class="dim">Ratings</div><div class="owner-stat">${s.count}</div></div>
-    <div class="card"><div class="dim">Average rating</div><div class="owner-stat">${s.avg} / 5</div></div>
-  </div>
-  <p class="owner-muted">This HTML version stores stats locally in the browser. A backend/database is required for shared cross-device live users and ratings.</p>
-  </div>`;
-};
-V.ratings=()=>{
-  if(accessMode!=="owner")return go("home");
-  const s=ownerStats();
-  $("#app").innerHTML=`<div class="card"><h2>RATING OVERVIEW</h2>
-  <p><span class="owner-stat">${s.avg}</span> / 5</p>
-  <p class="dim">Total submitted ratings: ${s.count}</p>
-  <p class="dim">Total star points: ${s.sum}</p>
-  <button class="btn g" onclick="go('owner')">Back to owner center</button></div>`;
-};
-function exitOwner(){accessMode="user";tabs=userTabs.slice();go("home")}
-
-applyTheme();
-$("#accessGate").style.display="flex";
-
-/* Prototype local usage tracking */
-(function(){
-  const k="cgx_total_visits", l="cgx_live_users", r="cgx_rating_done";
-  localStorage.setItem(k,String(Number(localStorage.getItem(k)||0)+1));
-  localStorage.setItem(l,String(Number(localStorage.getItem(l)||0)+1));
-  let left=false;
-  function markLeft(){
-    if(left)return;
-    left=true;
-    localStorage.setItem(l,String(Math.max(0,Number(localStorage.getItem(l)||1)-1)));
-  }
-  window.addEventListener("beforeunload",markLeft);
-  window.addEventListener("pagehide",markLeft);
-
-  let shown=false;
-  function showRating(){
-    if(shown||localStorage.getItem(r))return;
-    shown=true;
-    const box=document.createElement("div");
-    box.id="ratingPopup";
-    box.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px";
-    box.innerHTML=`<div class="gate-box" style="max-width:460px;text-align:center">
-      <h2>⭐ Rate CyberGuard X</h2>
-      <p class="dim">Before you leave, how would you rate your experience?</p>
-      <div id="stars" style="font-size:38px;letter-spacing:6px;margin:16px 0">
-        ${[1,2,3,4,5].map(n=>`<button aria-label="${n} stars" data-star="${n}" style="background:none;border:0;color:var(--dim);font-size:38px;cursor:pointer">★</button>`).join("")}
-      </div>
-      <button id="skipRating" class="btn g">Not now</button>
-    </div>`;
-    document.body.appendChild(box);
-    box.querySelectorAll("[data-star]").forEach(b=>b.onclick=()=>{
-      const n=Number(b.dataset.star);
-      localStorage.setItem("cgx_rating_sum",String(Number(localStorage.getItem("cgx_rating_sum")||0)+n));
-      localStorage.setItem("cgx_rating_count",String(Number(localStorage.getItem("cgx_rating_count")||0)+1));
-      localStorage.setItem(r,"1");
-      box.remove();
-    });
-    box.querySelector("#skipRating").onclick=()=>box.remove();
-  }
-  document.addEventListener("visibilitychange",()=>{
-    if(document.visibilityState==="hidden")showRating();
-  });
-})();
-
+const C={name:"Kratika Kushwaha"};
+function credits(){const d=document.createElement("div");d.className="card cred rev";d.innerHTML=`<h2>About the creator</h2><p><b>${esc(C.name)}</b><br>Built CyberGuard X for every learner who wants to stay safe online.</p><p class="dim">Stay curious. Stay safe online.</p>`;$("#app").appendChild(d)}
+function tour(){return [["🎣 Spot the phish","Paste a link and see the warning signs a scammer hopes you miss.","phish"],["🔐 Guard your passwords","Watch a strength meter react and learn why length wins.","pass"],["🕵️ Solve a case","Investigate a fake alert and hunt for the red flags.","detect"]].map(x=>`<div class="card rev" style="min-height:38vh;display:flex;flex-direction:column;justify-content:center"><h2 style="font-size:24px">${x[0]}</h2><p>${x[1]}</p><div><button class="btn" onclick="go('${x[2]}')">Open</button></div></div>`).join("")}
+function reveal(){const els=document.querySelectorAll(".rev");if(S.calm||matchMedia("(prefers-reduced-motion:reduce)").matches||!("IntersectionObserver" in window)){els.forEach(e=>e.classList.add("in"));return}const o=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");o.unobserve(e.target)}}),{threshold:.15});els.forEach(e=>o.observe(e))}
+function enter(){const i=$("#intro");i.classList.add("out");setTimeout(()=>i.remove(),800)}
+scene($("#ci"),"shield");applyTheme();go("home");
 </script></body></html>
